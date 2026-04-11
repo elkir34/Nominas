@@ -6,6 +6,8 @@
 *.sln.docstates
 
 # Build results
+[Bb]in/
+[Oo]bj/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -20,9 +22,19 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+*.log
 
 # Configuration files with sensitive data
 appsettings.json
-
-# Allow example configuration
+appsettings.*.json
 !appsettings.example.json
+
+# Test results / coverage (por si agregas tests)
+TestResults/
+*.trx
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet (si llegas a usar packages.config antiguo)
+packages/

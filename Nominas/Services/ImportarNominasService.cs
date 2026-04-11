@@ -116,9 +116,7 @@ public class ImportarNominasService
 
     #region Métodos de Procesamiento Excel (ExcelProcessor)
 
-    public (List<CargoNomina> Cargos, PeriodoInfo Periodo, double Total) ProcesarArchivo(
-        string rutaArchivo,
-        Dictionary<int, EmpleadoImportacionDto> mapaEmpleados)
+    public (List<CargoNomina> Cargos, PeriodoInfo Periodo, double Total) ProcesarArchivo(string rutaArchivo, Dictionary<int, EmpleadoImportacionDto> mapaEmpleados)
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 

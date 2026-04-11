@@ -22,15 +22,11 @@ public class TrabajadorService
         using MySqlConnection connection = new(_connectionString);
         connection.Open();
 
-        string strSQL = @"SELECT empleados.idEmpleado, noCuenta, FechaIngreso, TipoEmpleado, idDepartamento, idPuesto, Status, 
-                                CONCAT(ApPaterno, ' ', ApMaterno, ' ', Nombre) AS Empleado, Nombre, ApPaterno, ApMaterno, 
-                                Alias, RFC, CURP, IMSS, Domicilio, Email, Telefono, 
-                                FORMAT(IFNULL(Cargos,0),2) AS Cargos, FORMAT(IFNULL(Abonos,0),2) AS Abonos, FORMAT(IFNULL(Saldo,0),2) AS Saldo 
+        string strSQL = @"SELECT empleados.idEmpleado, noCuenta, FechaIngreso, TipoEmpleado, idDepartamento, idPuesto, Status, CONCAT(ApPaterno, ' ', ApMaterno, ' ', Nombre) AS Empleado, Nombre, ApPaterno, ApMaterno, 
+                                Alias, RFC, CURP, IMSS, Domicilio, Email, Telefono, FORMAT(IFNULL(Cargos,0),2) AS Cargos, FORMAT(IFNULL(Abonos,0),2) AS Abonos, FORMAT(IFNULL(Saldo,0),2) AS Saldo 
                          FROM empleados 
                             LEFT JOIN (SELECT tbl_cargos.idEmpleado As idEmpleado1, SUM(Cargo) As Cargos, SUM(Abono) As Abonos, SUM(Cargo - Abono) AS Saldo 
-                                       FROM tbl_cargos 
-                                       GROUP BY tbl_cargos.idEmpleado
-                                      )T1 ON T1.idEmpleado1=empleados.idEmpleado 
+                                       FROM tbl_cargos GROUP BY tbl_cargos.idEmpleado )T1 ON T1.idEmpleado1=empleados.idEmpleado 
                          GROUP BY empleados.idEmpleado";
 
         using MySqlDataAdapter adapter = new(strSQL, connection);
@@ -44,8 +40,7 @@ public class TrabajadorService
         using MySqlConnection connection = new(_connectionString);
         connection.Open();
 
-        string query = "SELECT idDepartamento, CONCAT(Departamento, ' ', Lugar) AS Departamento FROM departamento ORDER BY Departamento";
-        using MySqlDataAdapter adapter = new(query, connection);
+        using MySqlDataAdapter adapter = new("SELECT idDepartamento, CONCAT(Departamento, ' ', Lugar) AS Departamento FROM departamento ORDER BY Departamento", connection);
         DataTable dt = new();
         adapter.Fill(dt);
         return dt;
@@ -56,14 +51,13 @@ public class TrabajadorService
         using MySqlConnection connection = new(_connectionString);
         connection.Open();
 
-        string query = "SELECT * FROM puestos ORDER BY Puesto";
-        using MySqlDataAdapter adapter = new(query, connection);
+        using MySqlDataAdapter adapter = new("SELECT * FROM puestos ORDER BY Puesto", connection);
         DataTable dt = new();
         adapter.Fill(dt);
         return dt;
     }
 
-    public DataRow? BuscarEmpleado(int noCuenta, DataTable empleadosTable)
+    public static DataRow? BuscarEmpleado(int noCuenta, DataTable empleadosTable)
     {
         var rows = empleadosTable.Select($"noCuenta = {noCuenta}");
         return rows.Length > 0 ? rows[0] : null;
@@ -74,22 +68,15 @@ public class TrabajadorService
         using MySqlConnection connection = new(_connectionString);
         connection.Open();
 
-        //string query;
         bool esModificar = empleado.IdEmpleado > 0;
 
-        //if (esModificar)
-        //{
-        string query = esModificar  
+        string strSQL = esModificar  
             ? @"UPDATE empleados SET noCuenta=@noCuenta, FechaIngreso=@FechaIngreso, TipoEmpleado=@TipoEmpleado, idDepartamento=@idDepartamento, idPuesto=@idPuesto, Status=@Status, 
                         Nombre=@Nombre, ApPaterno=@ApPaterno, ApMaterno=@ApMaterno, Alias=@Alias, RFC=@RFC, CURP=@CURP, IMSS=@IMSS, Domicilio=@Domicilio, Email=@Email, Telefono=@Telefono WHERE idEmpleado=@idEmpleado"
-        //}
-        //else
-        //{
             : @"INSERT INTO empleados (noCuenta, FechaIngreso, TipoEmpleado, idDepartamento, idPuesto, Status, Nombre, ApPaterno, ApMaterno, Alias, RFC, CURP, IMSS, Domicilio, Email, Telefono) 
                                VALUES (@noCuenta, @FechaIngreso, @TipoEmpleado, @idDepartamento, @idPuesto, @Status, @Nombre, @ApPaterno, @ApMaterno, @Alias, @RFC, @CURP, @IMSS, @Domicilio, @Email, @Telefono)";
-        //}
 
-        using MySqlCommand cmd = new(query, connection);
+        using MySqlCommand cmd = new(strSQL, connection);
         cmd.Parameters.AddWithValue("@noCuenta", empleado.NoCuenta);
         cmd.Parameters.AddWithValue("@FechaIngreso", empleado.FechaIngreso.ToString("yyyy-MM-dd"));
         cmd.Parameters.AddWithValue("@TipoEmpleado", empleado.TipoEmpleado);

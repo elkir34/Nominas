@@ -14,7 +14,7 @@ public partial class MainForm : Form
     private readonly Dictionary<string, TabPage> _openTabs = new();
     private const int MENU_EXPANDED_WIDTH = 121;
     private const int MENU_COLLAPSED_WIDTH = 43;
-    private const int MENU_ANIMATION_STEP = 5;
+    private const int MENU_ANIMATION_STEP = 10;
     private bool isMenuExpanded = true;
     private int targetWidth;
     private bool expandiendo;

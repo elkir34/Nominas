@@ -1,17 +1,16 @@
-using System.Data;
 using Nominas.Models;
 using Nominas.Services;
+using System.Data;
 
 namespace Nominas.Views.Trabajadores;
 
 public partial class TrabajadoresMantenimientoView : UserControl
 {
     private readonly TrabajadorService _servicios;
-    private BindingSource _empleadosBS;
+    private readonly BindingSource _empleadosBS;
     private DataTable _empleadosDT;
     private DataTable _departamentosDT;
     private DataTable _puestosDT;
-    //private DataView _empleadosView;
 
     public TrabajadoresMantenimientoView()
     {
@@ -97,11 +96,11 @@ public partial class TrabajadoresMantenimientoView : UserControl
 
     private void CargarCombos()
     {
-        cbxDepartamento.DataSource = _departamentosDT.Copy();
+        cbxDepartamento.DataSource = _departamentosDT; //.Copy();
         cbxDepartamento.DisplayMember = "Departamento";
         cbxDepartamento.ValueMember = "idDepartamento";
 
-        cbxPuesto.DataSource = _puestosDT.Copy();
+        cbxPuesto.DataSource = _puestosDT; //.Copy();
         cbxPuesto.DisplayMember = "Puesto";
         cbxPuesto.ValueMember = "idPuesto";
 
@@ -168,9 +167,10 @@ public partial class TrabajadoresMantenimientoView : UserControl
 
         _empleadosBS.Filter = filtros.Count > 0 ? string.Join(" AND ", filtros) : string.Empty;
     }
+
     private void BtnNuevo_Click(object? sender, EventArgs e)
     {
-        BloquearControles(false);
+        BloquearControles(true);
         LimpiarCampos();
         txtNoCuenta.Focus();
     }
@@ -182,7 +182,7 @@ public partial class TrabajadoresMantenimientoView : UserControl
             MessageBox.Show("Seleccione un empleado para modificar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
-        BloquearControles(false);
+        BloquearControles(true);
         txtNoCuenta.Focus();
     }
 
@@ -215,9 +215,6 @@ public partial class TrabajadoresMantenimientoView : UserControl
 
             if (empleado.IdEmpleado == 0)
             {
-                //DataRow? empleadoExistente = _servicios.BuscarEmpleado(empleado.NoCuenta, _empleadosDT);
-
-                //if (empleadoExistente != null)
                 if( _empleadosBS.Find("noCuenta", empleado.NoCuenta) >= 0)
                 {
                     MessageBox.Show("Ya existe un empleado con ese número de cuenta.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -228,7 +225,7 @@ public partial class TrabajadoresMantenimientoView : UserControl
             int nuevoId = _servicios.GuardarEmpleado(empleado);
             MessageBox.Show("Empleado guardado correctamente.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-            BloquearControles(true);
+            BloquearControles(false);
 
             CargarDatos();
 
@@ -399,8 +396,6 @@ public partial class TrabajadoresMantenimientoView : UserControl
         btnModificar.Enabled = bloquear;
         btnGuardar.Enabled = !bloquear;
         btnEliminar.Enabled = bloquear;
-
-        //groupBoxFiltros.Enabled = bloquear;
     }
 }
 

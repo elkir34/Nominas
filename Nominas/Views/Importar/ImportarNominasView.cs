@@ -1,6 +1,6 @@
-using System.Data;
 using Nominas.Models;
 using Nominas.Services;
+using System.Data;
 
 namespace Nominas.Views.Importar;
 
@@ -18,22 +18,23 @@ public partial class ImportarNominasView : UserControl
         _cargosActuales = new List<CargoNomina>();
         _mapaEmpleados = new Dictionary<int, EmpleadoImportacionDto>();
 
-        ConfigurarEventos();
+        //ConfigurarEventos();
         InicializarFormulario();
     }
-
+    /*
     private void ConfigurarEventos()
     {
         BtnSeleccionarArchivo.Click += BtnSeleccionarArchivo_Click;
         BtnGuardar.Click += BtnGuardar_Click;
         BtnCancelar.Click += BtnCancelar_Click;
     }
+    */
 
     private void InicializarFormulario()
     {
         DtpFecha.Value = DateTime.Now;
         TxtArchivoExcel.ReadOnly = true;
-        BtnGuardar.Enabled = false;
+        btnGuardar.Enabled = false;
     }
 
     private async void ImportarNominasView_Load(object sender, EventArgs e)
@@ -41,18 +42,11 @@ public partial class ImportarNominasView : UserControl
         try
         {
             Cursor = Cursors.WaitCursor;
-            await Task.Run(() =>
-            {
-                _mapaEmpleados = _service.ObtenerMapaEmpleados();
-            });
+            await Task.Run(() => { _mapaEmpleados = _service.ObtenerMapaEmpleados(); });
         }
         catch (Exception ex)
         {
-            MessageBox.Show(
-                $"Error al cargar empleados: {ex.Message}",
-                "Error",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Error);
+            MessageBox.Show($"Error al cargar empleados: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
         {
@@ -69,10 +63,9 @@ public partial class ImportarNominasView : UserControl
             try
             {
                 Cursor = Cursors.WaitCursor;
-                BtnSeleccionarArchivo.Enabled = false;
+                BtnArchivoExcel.Enabled = false;
 
-                var resultado = await Task.Run(() =>
-                    _service.ProcesarArchivo(OpenSeleccionarArchivo.FileName, _mapaEmpleados));
+                var resultado = await Task.Run(() => _service.ProcesarArchivo(OpenSeleccionarArchivo.FileName, _mapaEmpleados));
 
                 _cargosActuales = resultado.Cargos;
                 _periodoActual = resultado.Periodo;
@@ -82,74 +75,49 @@ public partial class ImportarNominasView : UserControl
                     DtpFecha.Value = DateTime.Parse(resultado.Periodo.FechaFinSql);
                 }
 
-                TxtCargosDetectados.Text = resultado.Cargos.Count.ToString();
+                txtCargosDetectados.Text = resultado.Cargos.Count.ToString();
                 TxtPeriodo.Text = resultado.Periodo.PeriodoTexto;
                 TxtTotal.Text = $"${resultado.Total:N2}";
 
-                MostrarCargosEnGrid(resultado.Cargos, resultado.Total);
-                BtnGuardar.Enabled = true;
+                dataGridView1.AutoGenerateColumns = false;
+                dataGridView1.DataSource = resultado.Cargos;
 
-                MessageBox.Show(
-                    $"✓ Archivo procesado exitosamente\n\n" +
-                    $"Cargos detectados: {resultado.Cargos.Count}\n" +
-                    $"Total: ${resultado.Total:N2}\n" +
-                    $"Periodo: {resultado.Periodo.PeriodoTexto}",
-                    "Éxito",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
+                btnGuardar.Enabled = true;
+
+                //MessageBox.Show($"✓ Archivo procesado exitosamente\n\nCargos detectados: {resultado.Cargos.Count}\nTotal: ${resultado.Total:N2}\nPeriodo: {resultado.Periodo.PeriodoTexto}", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show(
-                    $"Error al procesar archivo:\n\n{ex.Message}",
-                    "Error",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Error);
-
+                MessageBox.Show($"Error al procesar archivo:\n\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 LimpiarFormulario();
             }
             finally
             {
                 Cursor = Cursors.Default;
-                BtnSeleccionarArchivo.Enabled = true;
+                BtnArchivoExcel.Enabled = true;
             }
         }
     }
-
-    private void MostrarCargosEnGrid(List<CargoNomina> cargos, double total)
-    {
-        var tabla = new DataTable();
-        tabla.Columns.Add("Cta", typeof(int));
-        tabla.Columns.Add("Empleado", typeof(string));
-        tabla.Columns.Add("ConceptoExcel", typeof(string));
-        tabla.Columns.Add("Rubro", typeof(string));
-        tabla.Columns.Add("ConceptoGenerado", typeof(string));
-        tabla.Columns.Add("Abono", typeof(string));
-
-        foreach (var cargo in cargos)
+    /*
+        private void MostrarCargosEnGrid(List<CargoNomina> cargos) //, double total)
         {
-            tabla.Rows.Add(
-                cargo.NoCuenta,
-                cargo.NombreEmpleado,
-                cargo.ConceptoOriginal,
-                cargo.RubroNombre,
-                cargo.MiConcepto,
-                $"${cargo.Abono:N2}"
-            );
+            var tabla = new DataTable();
+            tabla.Columns.Add("Cta", typeof(int));
+            tabla.Columns.Add("Empleado", typeof(string));
+            tabla.Columns.Add("ConceptoExcel", typeof(string));
+            tabla.Columns.Add("Rubro", typeof(string));
+            tabla.Columns.Add("ConceptoGenerado", typeof(string));
+            tabla.Columns.Add("Abono", typeof(double));
+
+            foreach (var cargo in cargos)
+            {
+                tabla.Rows.Add(cargo.NoCuenta, cargo.NombreEmpleado, cargo.ConceptoOriginal, cargo.RubroNombre, cargo.MiConcepto, cargo.Abono);
+            }
+
+            dataGridView1.AutoGenerateColumns = false;
+            dataGridView1.DataSource = tabla;
         }
-
-        tabla.Rows.Add(null, null, null, null, "TOTAL:", $"${total:N2}");
-
-        dataGridView1.DataSource = tabla;
-
-        if (dataGridView1.Rows.Count > 0)
-        {
-            var ultimaFila = dataGridView1.Rows[dataGridView1.Rows.Count - 1];
-            ultimaFila.DefaultCellStyle.BackColor = Color.LightGray;
-            ultimaFila.DefaultCellStyle.Font = new Font(dataGridView1.Font, FontStyle.Bold);
-        }
-    }
-
+    */
     private async void BtnGuardar_Click(object? sender, EventArgs e)
     {
         if (_cargosActuales.Count == 0)
@@ -174,10 +142,7 @@ public partial class ImportarNominasView : UserControl
                 var resultado = MessageBox.Show(
                     $"⚠ ADVERTENCIA\n\n" +
                     $"La póliza #{numPoliza} con fecha {DtpFecha.Value:dd/MM/yyyy} ya fue registrada anteriormente.\n\n" +
-                    $"¿Desea continuar de todos modos?",
-                    "Póliza Duplicada",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Warning);
+                    $"¿Desea continuar de todos modos?", "Póliza Duplicada", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
 
                 if (resultado == DialogResult.No)
                     return;
@@ -188,16 +153,13 @@ public partial class ImportarNominasView : UserControl
                 $"Cargos: {_cargosActuales.Count}\n" +
                 $"Póliza: #{numPoliza}\n" +
                 $"Fecha: {DtpFecha.Value:dd/MM/yyyy}\n\n" +
-                $"Esta acción no se puede deshacer.",
-                "Confirmar Guardado",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
+                $"Esta acción no se puede deshacer.", "Confirmar Guardado", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (confirmacion == DialogResult.No)
                 return;
 
             Cursor = Cursors.WaitCursor;
-            BtnGuardar.Enabled = false;
+            btnGuardar.Enabled = false;
 
             int registrosGuardados = await Task.Run(() => _service.GuardarCargos(_cargosActuales, fechaPoliza, numPoliza));
 
@@ -212,7 +174,7 @@ public partial class ImportarNominasView : UserControl
         finally
         {
             Cursor = Cursors.Default;
-            BtnGuardar.Enabled = true;
+            btnGuardar.Enabled = true;
         }
     }
 
@@ -228,13 +190,25 @@ public partial class ImportarNominasView : UserControl
     {
         TxtArchivoExcel.Clear();
         TxtPoliza.Clear();
-        TxtCargosDetectados.Clear();
+        txtCargosDetectados.Clear();
         TxtPeriodo.Clear();
         TxtTotal.Clear();
         DtpFecha.Value = DateTime.Now;
         _cargosActuales.Clear();
         _periodoActual = null;
         dataGridView1.DataSource = null;
-        BtnGuardar.Enabled = false;
+        btnGuardar.Enabled = false;
+    }
+
+    private void DataGridView1_SelectionChanged(object sender, EventArgs e)
+    {
+        double sumaAbonos = 0;
+
+        foreach (DataGridViewRow fila in dataGridView1.SelectedRows)
+            if (fila.DataBoundItem is CargoNomina cargo)
+                sumaAbonos += cargo.Abono;
+
+        txtRenSeleccion.Text = dataGridView1.SelectedRows.Count.ToString();
+        txtRenSuma.Text = $"{sumaAbonos:N2}";
     }
 }
